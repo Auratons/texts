@@ -308,6 +308,8 @@ Windows partition as Microsoft Windows Recovery Environment does.
     Code's snap 'code' does not suffer from this behavior since it asks for
     higher privileges from the very beginning of the installation.)
 
+12. Turn off fast boot on Windows.
+
 ## Conclusion & Future Work
 
 Now we have the desired dual boot system with two flaws:
@@ -331,3 +333,82 @@ complicated process that needs to be repeated with each new kernel version.
 
 [ubuntu-guide]:
 https://help.ubuntu.com/community/Full_Disk_Encryption_Howto_2019
+
+## Problems
+
+The first time I tried to connect an external display, I found out the notebook
+does not see it. As this emerged after nvidia-smi stopped working and since I
+was told that for nvidia-docker I need NVIDIA driver version 440, I decided to
+reinstall the whole NVIDIA stack.
+
+According to
+[this](https://devtalk.nvidia.com/default/topic/1066356/linux/ubuntu-19-10-with-driver-440-31-no-nvidia-graphics-adapter-found-on-rtx2060-mobile/)
+forum topic, one must run:
+
+    # This is for making note of what is going to happen for recovery in case of failure.
+    $ sudo apt-get purge 'nvidia*' | tee ~/purge-nvidia-output.txt
+    $ sudo apt autoremove
+    $ sudo add-apt-repository ppa:graphics-drivers
+    $ sudo apt-get update
+    # Currently the most recent driver in PPA.
+    $ sudo apt-get install nvidia-driver-440 
+
+This process asks to create some password because of Secure Boot and the
+necessity for 'Enrolling MOK'. An option for the enrollment is presented when
+manually rebooting after the installation finishes. After choosing it, one needs
+to type this password. Following the reboot, the external display starts to work
+as well as nvidia-smi.
+
+Since I'm a heavy Docker user, I also wanted to install Docker Engine &ndash;
+Community. For that, following [the official
+approach](https://docs.docker.com/install/linux/docker-ce/ubuntu/) means running
+these:
+
+    $ sudo apt-get remove docker docker-engine docker.io containerd runc
+    $ sudo apt-get update
+    $ sudo apt-get install \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg-agent \
+        software-properties-common
+    $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+    $ sudo add-apt-repository \
+        "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+        $(lsb_release -cs) \
+        stable"
+    $ sudo apt-get update
+    $ sudo apt-get install docker-ce docker-ce-cli containerd.io
+    # Verify
+    $ sudo docker run hello-world
+
+There is no official support for Ubuntu 19.10 Eoan yet. In this case,
+`$(lsb_release -cs)` needs to be changed to the last supported distro, which is
+'dicso' at the moment. Fortunately, the maintainers at least ensure the command
+above works by automatically fallbacking to 'disco' anyways.
+
+I decided for this way, although there is docker.io apt package brought back to
+life, see
+[this](https://www.collabora.com/news-and-blog/blog/2018/07/04/docker-io-debian-package-back-to-life/)
+post. The advantage of the Debian package is that one does not have Docker
+dependencies two times, along with system ones &ndash; official Docker
+maintainers have chosen golang-all-in-one package style for their packages,
+whereas Debian system strives for package sharing. Since I have plenty of space,
+I rather use duplicity-making way hoping for no errors in the future.
+
+Finally, having installed Docker and the newest NVIDIA driver, it's time to take
+advantage of [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)!
+
+    # Add the package repositories
+    $ distribution=$(. /etc/os-release;echo $ID$VERSION_ID)
+    $ curl -s -L https://nvidia.github.io/nvidia-docker/gpgkey | sudo apt-key add -
+    $ curl -s -L https://nvidia.github.io/nvidia-docker/$distribution/nvidia-docker.list | sudo tee /etc/apt/sources.list.d/nvidia-docker.list
+
+    $ sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+    $ sudo systemctl restart docker
+    # Verify
+    $ docker run --gpus all nvidia/cuda:9.0-base nvidia-smi
+
+Again, fallbacking for `. /etc/os-release;echo $ID$VERSION_ID` works, so we do
+not need to rewrite anything, the default commands work, even though 19.10 is
+not officially supported yet.
