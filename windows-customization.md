@@ -1,4 +1,6 @@
-# Disable system beep
+# Customizing Windows 10
+
+## Disable system beep
 
 Go to **Control Panel** -> **Sound** -> **Sounds**, within **Program Events**
 search for **Default Beep** in **Windows** section. Set its **Sounds** (located
@@ -7,7 +9,7 @@ in the bottom) to **None** and you are done. Taken from
 
 
 
-# Get rid of pre-login animation on a key press
+## Get rid of pre-login animation on a key press
 Thanks to
 [superuser](https://superuser.com/questions/979239/is-there-a-work-around-for-the-extra-key-press-and-delay-at-login-screen/979242),
 you need to: 
@@ -20,45 +22,7 @@ you need to:
 
 
 
-# Use Hack Nerd Font in WSL and/or WT
-
-Firstly, to be able to set the Windows Subsystem for Linux (WSL) and/or Windows
-Terminal (WT) up correctly, install [the Hack Regular Nerd Font Complete Windows
-Compatible
-font](https://github.com/ryanoasis/nerd-fonts/blob/master/patched-fonts/Hack/Regular/complete/)
-as Administrator.
-
-In my case, the font was installed as 'Hack NF', one can find it in **Font
-settings**. The font also has a second, longer, name, but WSL nor WT registers
-the longer name.
-
-For WT, the process is pretty straightforward. Just open **Settings** (Ctrl + ,)
-and add `"fontFace": "Hack NF"` to the Ubuntu profile. You can also add
-`fontSize` key with an integer value. Finally, you can set `defaultProfile` to
-Ubuntu's `guid`.
-
-For WSL, the process is more tricky since it incorporates using **Registry
-Editor**:
-
-  1. Type **WinKey + R**, enter `regedit` & press Enter.
-  2. Navigate to **Computer** -> **HKEY_CURRENT_USER** -> **Console** ->
-     **C:_Program
-     Files_WindowsApps_CanonicalGroupLimited.UbuntuonWindows_1804.2019.521.0_x64__79rhkp1fndgsc_ubuntu.exe**.
-  3. Change **FaceName** to `Hack NF` and **FontSize** to decimal size, if
-     wanted.
-
-Unfortunately, this workaround means that you are not able to change anything
-related to fonts in WSL's settings. Such a change would immediately remove
-user-set font in the Registry resulting in necessity of re-doing the steps
-above. Inspiration for this setup was taken from [WSL's
-Github](https://github.com/Microsoft/WSL/issues/757).
-
-Why bothering with WSL when having WT? In my case, WT is extremely slow out of
-the box. WSL as well, but not as much as WT.
-
-
-
-# Automatically mount a file system with fstab in WSL
+## Automatically mount a file system with fstab in WSL
 
 If you use a Veracrypt-encrypted drive that is automatically mounted upon login
 to your Windows account, you may notice that it is not automatically mounted
@@ -80,4 +44,18 @@ want to reuse as many mount options from proper Ubuntu's fstab as I can. The
 drvfs file system after some testing with `sudo mount -t drvfs -o ...` supports
 the following WSL `fstab` line:
 
-    S:   /mnt/s  drvfs   defaults,noatime,uid=1000,gid=1000,dmask=027    0   0
+    S:   /mnt/s  drvfs   defaults,metadata,noatime,uid=1000,gid=1000,dmask=027    0   0
+
+## Git running on a Windows-Linux shared NTFS filesystem
+https://git-scm.com/docs/git-config
+https://github.com/microsoft/WSL/issues/184
+https://github.com/hangxingliu/wslgit
+https://medium.com/faun/how-to-use-git-and-other-linux-tools-in-wsl-on-windows-4c0bffb68b35
+
+crlf nema cenu, ale 
+ git config --system core.filemode false
+je fakt potreba
+
+https://medium.com/@securitystreak/veracrypt-full-disk-drive-encryption-fde-157eacbf0b61
+https://wiki.gentoo.org/wiki/GRUB2/Chainloading
+https://github.com/octetz/arch-windows-encrypted-uefi-install
